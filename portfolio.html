@@ -1,0 +1,1861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reel & Rig — Video Editor / On-Set Crew</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="https://img.youtube.com/vi/8GRBJvDlItg/hqdefault.jpg">
+<style>
+  :root{
+    --void:#0A0B0D;
+    --panel:#16181C;
+    --panel-2:#1D2024;
+    --line:#2A2D33;
+    --amber:#FF9142;
+    --cyan:#4FD1FF;
+    --paper:#F2F1ED;
+    --grey:#8B8D93;
+    --grey-dim:#5B5D63;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+
+  body{
+    background:var(--void);
+    color:var(--paper);
+    font-family:'Work Sans', sans-serif;
+    font-weight:300;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+
+  .mono{
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:0.03em;
+  }
+
+  a{color:inherit; text-decoration:none;}
+  ul{list-style:none;}
+  img,video,iframe{max-width:100%; display:block;}
+
+  ::selection{background:var(--amber); color:var(--void);}
+
+  :focus-visible{
+    outline:2px solid var(--cyan);
+    outline-offset:3px;
+  }
+
+  html, body{
+    max-width:100%;
+    overflow-x:hidden;
+  }
+
+  h1,h2,h3,p,span,a{
+    overflow-wrap:break-word;
+    word-break:break-word;
+  }
+
+  .container{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 32px;
+    width:100%;
+  }
+
+  @media (max-width:640px){
+    .container{padding:0 18px;}
+  }
+  @media (max-width:380px){
+    .container{padding:0 14px;}
+  }
+
+  /* ===== NAV — timeline scrubber bar ===== */
+  .nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:100;
+    background:rgba(10,11,13,0.88);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 32px;
+    height:64px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .nav-brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:14px;
+  }
+  .rec-dot{
+    width:8px; height:8px;
+    border-radius:50%;
+    background:#FF4D4D;
+    box-shadow:0 0 8px #FF4D4D;
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1;}
+    50%{opacity:0.35;}
+  }
+  .nav-tc{
+    color:var(--grey);
+    font-size:13px;
+  }
+  .nav-links{
+    display:flex;
+    gap:28px;
+    font-size:13px;
+  }
+  .nav-links a{
+    color:var(--grey);
+    position:relative;
+    padding-bottom:4px;
+    transition:color 0.2s;
+  }
+  .nav-links a::after{
+    content:'';
+    position:absolute;
+    left:0; bottom:0;
+    width:0%;
+    height:2px;
+    background:var(--amber);
+    transition:width 0.25s ease;
+  }
+  .nav-links a:hover{color:var(--paper);}
+  .nav-links a:hover::after{width:100%;}
+  .nav-links{display:none;}
+  @media (min-width:760px){ .nav-links{display:flex;} }
+
+  .nav-toggle{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:5px;
+    width:32px;
+    height:32px;
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:0;
+  }
+  .nav-toggle span{
+    display:block;
+    width:20px;
+    height:2px;
+    background:var(--paper);
+    transition:transform 0.25s ease, opacity 0.25s ease;
+  }
+  .nav-toggle.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .nav-toggle.open span:nth-child(2){opacity:0;}
+  .nav-toggle.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+  @media (min-width:760px){ .nav-toggle{display:none;} }
+
+  .mobile-menu{
+    display:none;
+    flex-direction:column;
+    background:rgba(10,11,13,0.97);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    overflow:hidden;
+    max-height:0;
+    transition:max-height 0.3s ease;
+  }
+  .mobile-menu.open{
+    display:flex;
+    max-height:320px;
+  }
+  .mobile-menu a{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    color:var(--grey);
+    padding:16px 18px;
+    border-top:1px solid var(--line);
+  }
+  .mobile-menu a:hover{color:var(--paper);}
+  @media (min-width:760px){ .mobile-menu{display:none !important;} }
+
+  /* ===== HERO ===== */
+  .hero{
+    min-height:100svh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding-top:120px;
+    padding-bottom:60px;
+    position:relative;
+  }
+  .hero-eyebrow{
+    font-size:12px;
+    color:var(--cyan);
+    margin-bottom:18px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .hero-eyebrow .bar{
+    width:28px; height:1px;
+    background:var(--cyan);
+  }
+  .hero h1{
+    font-size:clamp(2.6rem, 7vw, 5.2rem);
+    line-height:1.02;
+    max-width:900px;
+  }
+  .hero h1 .accent{color:var(--amber);}
+  .hero-sub{
+    margin-top:24px;
+    max-width:560px;
+    color:var(--grey);
+    font-size:17px;
+  }
+  .hero-roles{
+    margin-top:34px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .role-chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--paper);
+    border:1px solid var(--line);
+    padding:7px 12px;
+    border-radius:3px;
+    background:var(--panel);
+  }
+  .role-chip b{color:var(--amber);}
+
+  .hero-monitor{
+    margin-top:56px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--panel);
+    padding:14px;
+    max-width:760px;
+  }
+  .carousel{
+    position:relative;
+    aspect-ratio:16/9;
+    border-radius:3px;
+    overflow:hidden;
+    background:#101216;
+  }
+  .carousel-track{
+    display:flex;
+    height:100%;
+    transition:transform 0.6s cubic-bezier(.65,0,.35,1);
+  }
+  .carousel-slide{
+    flex:0 0 100%;
+    height:100%;
+    position:relative;
+    display:flex;
+    align-items:flex-end;
+    background-size:contain;
+    background-repeat:no-repeat;
+    background-position:center;
+    background-color:#0A0B0D;
+  }
+  .carousel-slide::after{
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(0deg, rgba(10,11,13,0.85) 0%, rgba(10,11,13,0.05) 55%);
+  }
+  .carousel-caption{
+    position:relative;
+    z-index:1;
+    padding:16px 18px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--paper);
+  }
+  .carousel-caption .role{
+    display:block;
+    color:var(--amber);
+    font-size:10.5px;
+    margin-bottom:3px;
+    text-transform:uppercase;
+  }
+  .carousel-dots{
+    position:absolute;
+    bottom:14px; right:16px;
+    z-index:2;
+    display:flex;
+    gap:6px;
+  }
+  .carousel-dots button{
+    width:6px; height:6px;
+    border-radius:50%;
+    border:none;
+    background:rgba(242,241,237,0.35);
+    cursor:pointer;
+    padding:0;
+    transition:background 0.2s, transform 0.2s;
+  }
+  .carousel-dots button.active{
+    background:var(--paper);
+    transform:scale(1.3);
+  }
+  .carousel-arrow{
+    position:absolute;
+    top:50%; transform:translateY(-50%);
+    z-index:2;
+    width:32px; height:32px;
+    border-radius:50%;
+    border:1px solid rgba(242,241,237,0.25);
+    background:rgba(10,11,13,0.5);
+    color:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    font-size:14px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .carousel-arrow.prev{left:12px;}
+  .carousel-arrow.next{right:12px;}
+
+  /* ===== ROLES / TRACKS SECTION ===== */
+  .tracks{
+    padding-top:100px;
+    padding-bottom:100px;
+    border-top:1px solid var(--line);
+  }
+  .section-head{
+    margin-bottom:56px;
+    max-width:640px;
+  }
+  .section-eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  .section-head h2{
+    font-size:clamp(1.8rem, 4vw, 2.6rem);
+  }
+
+  .track-row{
+    display:grid;
+    grid-template-columns:110px 1fr;
+    border-top:1px solid var(--line);
+    padding:26px 0;
+    gap:24px;
+    align-items:start;
+  }
+  @media (max-width:520px){
+    .track-row{grid-template-columns:1fr; gap:10px;}
+  }
+  .track-row:last-child{border-bottom:1px solid var(--line);}
+  .track-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    padding-top:2px;
+  }
+  .track-tag .track-code{
+    display:inline-block;
+    padding:3px 8px;
+    border-radius:3px;
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .track-content h3{
+    font-size:20px;
+    margin-bottom:8px;
+  }
+  .track-content p{
+    color:var(--grey);
+    font-size:15px;
+    max-width:640px;
+  }
+  .tc-edit .track-code{background:rgba(79,209,255,0.12); color:var(--cyan);}
+  .tc-lx .track-code{background:rgba(255,145,66,0.14); color:var(--amber);}
+  .tc-audio .track-code{background:rgba(120,200,140,0.14); color:#7FD79A;}
+  .tc-dir .track-code{background:rgba(200,150,255,0.14); color:#C79BFF;}
+  .tc-pa .track-code{background:rgba(255,209,102,0.14); color:#FFD166;}
+  .tc-pr .track-code{background:rgba(255,120,150,0.14); color:#FF7896;}
+
+  /* ===== WORK ===== */
+  .work{
+    padding-top:100px;
+    padding-bottom:100px;
+    border-top:1px solid var(--line);
+  }
+  .filters{
+    display:flex;
+    gap:10px;
+    margin-bottom:40px;
+    flex-wrap:wrap;
+  }
+  .filter-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    padding:9px 16px;
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:transparent;
+    color:var(--grey);
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .filter-btn:hover{border-color:var(--grey);}
+  .filter-btn.active{
+    background:var(--paper);
+    color:var(--void);
+    border-color:var(--paper);
+  }
+
+  .work-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    grid-auto-rows:70px;
+    grid-auto-flow:dense;
+    gap:22px;
+  }
+  @media (max-width:900px){
+    .work-grid{grid-template-columns:repeat(2, 1fr); grid-auto-flow:row; grid-auto-rows:auto;}
+    .work-card{grid-row:auto !important;}
+  }
+  @media (max-width:640px){
+    .work-grid{grid-template-columns:1fr; grid-auto-flow:row; grid-auto-rows:auto;}
+    .work-card{grid-row:auto !important;}
+  }
+
+  /* ===== MOBILE CATEGORY CAROUSELS ===== */
+  .mobile-carousels{display:none;}
+  @media (max-width:640px){
+    .mobile-carousels{display:block; margin-top:8px;}
+    .filters{display:none;}
+    #creditGrid, #workGrid{display:none;}
+  }
+  .mc-category{margin-bottom:40px;}
+  .mc-category-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:19px;
+    color:var(--paper);
+    margin-bottom:16px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .mc-category-title::before{
+    content:'';
+    width:4px;
+    height:18px;
+    background:var(--amber);
+    border-radius:2px;
+    display:inline-block;
+  }
+  .mc-row{
+    display:flex;
+    gap:14px;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    padding-bottom:6px;
+    margin:0 -18px;
+    padding-left:18px;
+    padding-right:18px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .mc-row::-webkit-scrollbar{display:none;}
+  .mc-row .work-card{
+    flex:0 0 220px;
+    width:220px;
+    scroll-snap-align:start;
+  }
+  .mc-row .work-thumb{
+    height:280px !important;
+    width:220px !important;
+    aspect-ratio:unset !important;
+    background-size:contain !important;
+    background-repeat:no-repeat !important;
+    background-color:#0A0B0D;
+  }
+  .mc-row .work-info{width:220px;}
+  .work-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+    transition:transform 0.25s ease, border-color 0.25s ease;
+  }
+  .work-card.span-portrait{grid-row:span 7;}
+  .work-card.span-landscape{grid-row:span 4;}
+  .work-card.span-square{grid-row:span 5;}
+  .work-card:hover{
+    transform:translateY(-4px);
+    border-color:var(--grey-dim);
+  }
+  .work-thumb{
+    aspect-ratio:16/9;
+    width:100%;
+    background:linear-gradient(135deg, #1c1e22, #101216);
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .work-card[data-cat="reels"] .work-thumb{aspect-ratio:9/16;}
+  .work-thumb .tc-overlay{
+    position:absolute;
+    bottom:10px; left:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:rgba(242,241,237,0.6);
+    background:rgba(0,0,0,0.4);
+    padding:2px 6px;
+    border-radius:2px;
+  }
+  .work-thumb .play-sm{
+    width:40px; height:40px;
+    border-radius:50%;
+    border:1px solid rgba(242,241,237,0.3);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .work-thumb .play-sm::after{
+    content:'';
+    border-style:solid;
+    border-width:6px 0 6px 10px;
+    border-color:transparent transparent transparent rgba(242,241,237,0.7);
+    margin-left:2px;
+  }
+  .work-thumb.embed{padding:0;}
+  .work-thumb.embed iframe{width:100%; height:100%; border:0; display:block;}
+  .work-thumb.embed.yt-lazy{
+    background-size:cover;
+    background-position:center;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .work-thumb.embed.yt-lazy .play-sm{
+    width:56px; height:56px;
+    background:rgba(10,11,13,0.55);
+    border:1px solid rgba(242,241,237,0.4);
+  }
+  .work-thumb.embed.yt-lazy .play-sm::after{
+    border-width:9px 0 9px 15px;
+    margin-left:3px;
+  }
+  .work-thumb.link-out{
+    flex-direction:column;
+    gap:10px;
+    text-decoration:none;
+    color:var(--paper);
+    transition:background 0.2s;
+  }
+  .work-thumb.link-out:hover{background:rgba(255,255,255,0.03);}
+  .work-thumb.link-out .ext-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--grey);
+  }
+  .work-thumb.link-out.has-thumb{
+    background-size:cover;
+    background-position:center;
+    position:relative;
+  }
+  .work-thumb.link-out.has-thumb::before{
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(0deg, rgba(10,11,13,0.75) 0%, rgba(10,11,13,0.15) 60%);
+  }
+  .work-thumb.link-out.has-thumb .play-sm,
+  .work-thumb.link-out.has-thumb .ext-label{
+    position:relative;
+    z-index:1;
+  }
+  .work-thumb.link-out.has-thumb .ext-label{color:var(--paper);}
+  div.work-thumb.link-out{cursor:default;}
+  div.work-thumb.link-out .ext-label{color:var(--grey-dim);}
+  .work-info{
+    padding:16px 18px 24px;
+  }
+  .work-info .cat-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--amber);
+    text-transform:uppercase;
+    margin-bottom:6px;
+    display:block;
+  }
+  .work-info h3{
+    font-size:16px;
+    font-weight:500;
+    font-family:'Space Grotesk', sans-serif;
+  }
+  .work-info p{
+    font-size:13px;
+    color:var(--grey-dim);
+    margin-top:4px;
+  }
+
+  .work-note{
+    margin-top:28px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--grey-dim);
+    border-left:2px solid var(--line);
+    padding-left:14px;
+  }
+
+  /* ===== ABOUT ===== */
+  .about{
+    padding-top:100px;
+    padding-bottom:100px;
+    border-top:1px solid var(--line);
+    display:grid;
+    grid-template-columns:1fr;
+    gap:40px;
+  }
+  @media (min-width:860px){
+    .about{grid-template-columns:300px 1fr; gap:56px; align-items:start;}
+  }
+  .about-photo{
+    aspect-ratio:1/1;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--panel);
+    overflow:hidden;
+  }
+  .about-photo img{width:100%; height:100%; object-fit:cover; border-radius:5px;}
+  .about-photo-placeholder{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--grey-dim);
+    line-height:1.6;
+  }
+  .about-copy p{
+    color:var(--grey);
+    font-size:16px;
+    margin-bottom:16px;
+    max-width:520px;
+  }
+  .about-stats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:36px;
+    margin-top:32px;
+    padding-top:28px;
+    border-top:1px solid var(--line);
+  }
+  .stat-num{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:2rem;
+    font-weight:700;
+    color:var(--amber);
+    line-height:1;
+  }
+  .stat-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    margin-top:6px;
+    display:block;
+  }
+
+  /* ===== SERVICES ===== */
+  .services-section{
+    padding-top:100px;
+    padding-bottom:100px;
+    border-top:1px solid var(--line);
+  }
+  .service-cards{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:20px;
+  }
+  @media (min-width:760px){
+    .service-cards{grid-template-columns:repeat(3, 1fr);}
+  }
+  .service-card{
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:28px 26px;
+    background:var(--panel);
+  }
+  .service-card .service-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--amber);
+    text-transform:uppercase;
+    margin-bottom:14px;
+    display:block;
+  }
+  .service-card h3{
+    font-size:20px;
+    margin-bottom:10px;
+  }
+  .service-card > p{
+    color:var(--grey);
+    font-size:14.5px;
+    margin-bottom:20px;
+  }
+  .service-meta{
+    border-top:1px solid var(--line);
+    padding-top:16px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .service-meta-row{
+    display:flex;
+    justify-content:space-between;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+  }
+  .service-meta-row span:first-child{color:var(--grey-dim);}
+  .service-meta-row span:last-child{color:var(--paper); text-align:right;}
+
+  /* ===== CONTACT ===== */
+  .contact{
+    padding-top:110px;
+    padding-bottom:90px;
+    border-top:1px solid var(--line);
+  }
+  .contact h2{
+    font-size:clamp(2rem, 5vw, 3.2rem);
+    max-width:640px;
+  }
+  .contact-sub{
+    color:var(--grey);
+    margin-top:18px;
+    max-width:480px;
+  }
+  .contact-grid{
+    margin-top:48px;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:40px;
+  }
+  @media (min-width:860px){
+    .contact-grid{grid-template-columns:1fr 1.2fr; gap:64px;}
+  }
+  .contact-info-list{border-top:1px solid var(--line);}
+  .contact-info-row{
+    padding:18px 0;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+  }
+  .contact-info-row span:first-child{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+  }
+  .contact-info-row a{
+    font-weight:500;
+    transition:color 0.2s;
+  }
+  .contact-info-row a:hover{color:var(--cyan);}
+  .contact-form{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .form-field label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--grey-dim);
+    text-transform:uppercase;
+    margin-bottom:8px;
+    display:block;
+  }
+  .form-field input,
+  .form-field textarea{
+    width:100%;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:12px 14px;
+    color:var(--paper);
+    font-family:'Work Sans', sans-serif;
+    font-size:14px;
+    resize:vertical;
+  }
+  .form-field input:focus,
+  .form-field textarea:focus{
+    outline:none;
+    border-color:var(--amber);
+  }
+  .form-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-top:6px;
+  }
+  .btn-secondary{
+    background:transparent;
+    color:var(--paper);
+    border:1px solid var(--line);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    font-weight:600;
+    padding:14px 24px;
+    border-radius:4px;
+    cursor:pointer;
+    transition:border-color 0.2s;
+  }
+  .btn-secondary:hover{border-color:var(--grey);}
+  .form-note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--grey-dim);
+    margin-top:2px;
+  }
+
+  .btn-primary{
+    background:var(--amber);
+    color:var(--void);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    font-weight:600;
+    padding:15px 26px;
+    border-radius:4px;
+    display:inline-block;
+    border:none;
+    cursor:pointer;
+    transition:opacity 0.2s;
+  }
+  .btn-primary:hover{opacity:0.85;}
+  .contact-links{
+    display:flex;
+    gap:22px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--grey);
+  }
+  .contact-links a:hover{color:var(--cyan);}
+
+  footer{
+    border-top:1px solid var(--line);
+    padding-top:26px;
+    padding-bottom:26px;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--grey-dim);
+  }
+
+  .reveal{
+    opacity:0;
+    transform:translateY(18px);
+    transition:opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.in{
+    opacity:1;
+    transform:translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <span class="rec-dot"></span>
+      <span class="mono">REC</span>
+      <span class="nav-tc mono" id="navClock">00:00:00:00</span>
+    </div>
+    <div class="nav-links mono">
+      <a href="#tracks">Roles</a>
+      <a href="#credits">Credits</a>
+      <a href="#work">Work</a>
+      <a href="#about">About</a>
+      <a href="#services">Services</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="mobile-menu mono" id="mobileMenu">
+    <a href="#tracks">Roles</a>
+    <a href="#credits">Credits</a>
+    <a href="#work">Work</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<header class="hero container">
+  <div class="hero-eyebrow mono"><span class="bar"></span>FREELANCE VIDEO EDITOR &amp; ON-SET CREW</div>
+  <h1>Cuts that land.<br>Sets that <span class="accent">run on time.</span></h1>
+  <p class="hero-sub">I edit long-form video, Instagram reels, and social ad content — and on set, I run lighting, sound, and act as assistant director. One person who understands the whole chain, from slate to final export.</p>
+
+  <div class="hero-roles">
+    <span class="role-chip"><b>V1:</b> Editor</span>
+    <span class="role-chip"><b>LX:</b> Gaffer</span>
+    <span class="role-chip"><b>A1:</b> Audioman</span>
+    <span class="role-chip"><b>AD:</b> Assistant Director</span>
+    <span class="role-chip"><b>PA:</b> Production Assistant</span>
+    <span class="role-chip"><b>PR:</b> Producer</span>
+  </div>
+
+  <div class="hero-monitor">
+    <div class="carousel" id="heroCarousel">
+      <div class="carousel-track" id="carouselTrack">
+        <a class="carousel-slide" href="https://www.youtube.com/watch?v=8GRBJvDlItg" target="_blank" rel="noopener" style="background-image:url('https://img.youtube.com/vi/8GRBJvDlItg/hqdefault.jpg')">
+          <div class="carousel-caption"><span class="role">Editor — Long-Form</span>傾傾偈子 Ladies N' Gentlemen</div>
+        </a>
+        <a class="carousel-slide" href="https://www.instagram.com/reel/DZXWer4CkDR/?igsh=MTQ1Nm16cWQxeW8wcA==" target="_blank" rel="noopener" style="background-image:url('ig-reels-images/kelantan-wayang-kulit.jpg')">
+          <div class="carousel-caption"><span class="role">Editor — IG Reel</span>Kelantan Wayang Kulit</div>
+        </a>
+        <a class="carousel-slide" href="https://www.instagram.com/reel/DWiblrnDxpx/?igsh=Yjd4eGN4aWdhZTN6" target="_blank" rel="noopener" style="background-image:url('social-media-ads/silent-velcro.jpg')">
+          <div class="carousel-caption"><span class="role">Editor — Social Media Ad</span>Silent Velcro</div>
+        </a>
+        <a class="carousel-slide" href="https://www.instagram.com/reel/DJ_hBwnzYrH/?igsh=MWlpNm16YjBjdng3Zw==" target="_blank" rel="noopener" style="background-image:url('gaffer-images/hadalabo-x-elaine-1.jpg')">
+          <div class="carousel-caption"><span class="role">Gaffer</span>Hada Labo × Elaine</div>
+        </a>
+        <a class="carousel-slide" href="https://www.instagram.com/reel/DRJZBP_EVYl/?igsh=MTFuZThjaDliaG05cg==" target="_blank" rel="noopener" style="background-image:url('audioman-images/40-sahaja.jpg')">
+          <div class="carousel-caption"><span class="role">Audioman</span>40 Sahaja</div>
+        </a>
+        <a class="carousel-slide" href="https://www.instagram.com/reel/C55yHE6RBWN/?igsh=MXQ1bjE4a3R6Y2ZlZA==" target="_blank" rel="noopener" style="background-image:url('producer-images/incompatible-bonds.jpg')">
+          <div class="carousel-caption"><span class="role">Producer</span>Incompatible Bonds 不適合</div>
+        </a>
+        <a class="carousel-slide" href="https://www.instagram.com/reel/DTcmmBqAZwx/?igsh=NDh2OTZnNTkybnp6" target="_blank" rel="noopener" style="background-image:url('production-assistant-images/100-plus-elaine.jpg')">
+          <div class="carousel-caption"><span class="role">Production Assistant</span>100 Plus X Elaine</div>
+        </a>
+        <a class="carousel-slide" href="https://www.youtube.com/watch?v=AHLjUwURkzo" target="_blank" rel="noopener" style="background-image:url('https://img.youtube.com/vi/AHLjUwURkzo/hqdefault.jpg')">
+          <div class="carousel-caption"><span class="role">2nd AD</span>The Split Program 頑美世界</div>
+        </a>
+      </div>
+      <button class="carousel-arrow prev" id="carouselPrev" aria-label="Previous slide">‹</button>
+      <button class="carousel-arrow next" id="carouselNext" aria-label="Next slide">›</button>
+      <div class="carousel-dots" id="carouselDots"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== ROLES / TRACKS ===== -->
+<section class="tracks container" id="tracks">
+  <div class="section-head reveal">
+    <div class="section-eyebrow">On the timeline</div>
+    <h2>Six tracks, one operator</h2>
+  </div>
+
+  <div class="track-row reveal tc-edit">
+    <div class="track-tag"><span class="track-code">V1: Editor</span></div>
+    <div class="track-content">
+      <h3>Video Editing</h3>
+      <p>Long-form video, Instagram reels, and paid social ads. Pacing, sound design, colour, and delivery specs tuned to where the piece is actually going to run.</p>
+    </div>
+  </div>
+
+  <div class="track-row reveal tc-lx">
+    <div class="track-tag"><span class="track-code">LX: Gaffer</span></div>
+    <div class="track-content">
+      <h3>Lighting</h3>
+      <p>On-set lighting setup and execution — building looks that hold up in the edit, not just on the monitor.</p>
+    </div>
+  </div>
+
+  <div class="track-row reveal tc-audio">
+    <div class="track-tag"><span class="track-code">A1: Audioman</span></div>
+    <div class="track-content">
+      <h3>Sound</h3>
+      <p>Production audio and boom operation, so the edit starts with clean dialogue instead of a cleanup job.</p>
+    </div>
+  </div>
+
+  <div class="track-row reveal tc-dir">
+    <div class="track-tag"><span class="track-code">AD: Assistant Director</span></div>
+    <div class="track-content">
+      <h3>Assistant Director</h3>
+      <p>Scheduling, shot lists, and keeping the day moving — the production side of understanding what the edit will actually need.</p>
+    </div>
+  </div>
+
+  <div class="track-row reveal tc-pa">
+    <div class="track-tag"><span class="track-code">PA: Production Assistant</span></div>
+    <div class="track-content">
+      <h3>Production Assistant</h3>
+      <p>Set logistics, equipment runs, and general on-the-ground support — filling gaps so the crew stays focused and the day stays on schedule.</p>
+    </div>
+  </div>
+
+  <div class="track-row reveal tc-pr">
+    <div class="track-tag"><span class="track-code">PR: Producer</span></div>
+    <div class="track-content">
+      <h3>Producer</h3>
+      <p>Pulling a project together end to end — story, budget, crew, and logistics — when a job needs someone across the whole production, not just one department.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ON-SET CREDITS ===== -->
+<section class="work container" id="credits">
+  <div class="section-head reveal">
+    <div class="section-eyebrow">On-set credits</div>
+    <h2>Where I've worked the floor</h2>
+  </div>
+
+  <div class="filters" data-target="creditGrid">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="lighting">LX: Gaffer</button>
+    <button class="filter-btn" data-filter="sound">A1: Audioman</button>
+    <button class="filter-btn" data-filter="ad">AD: Assistant Director</button>
+    <button class="filter-btn" data-filter="pa">PA: Production Assistant</button>
+    <button class="filter-btn" data-filter="producer">PR: Producer</button>
+  </div>
+
+  <div class="work-grid" id="creditGrid">
+    <div class="work-card span-portrait" data-cat="lighting">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('gaffer-images/hadalabo-x-elaine-1.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DJ_hBwnzYrH/?igsh=MWlpNm16YjBjdng3Zw==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Lighting</span>
+        <h3>Hada Labo X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="lighting">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('gaffer-images/colgate-x-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DQbeWFCAay9/?igsh=MTY4a2VpNWh6ejcyNg==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Lighting</span>
+        <h3>Colgate X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="lighting">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('gaffer-images/hadalabo-x-elaine-2.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DT1vGz1Aej1/?igsh=MXA2YWl6MThtMzkzcQ==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Lighting</span>
+        <h3>Hada Labo X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="lighting">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('gaffer-images/the-delivery-vault.jpg');aspect-ratio:9/16;background-size:contain;background-repeat:no-repeat;background-color:#0A0B0D" href="https://www.instagram.com/reel/DMHT58aRzqS/?igsh=cmpsaGI0Z2VpbHFh" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Lighting</span>
+        <h3>The Delivery Vault</h3>
+        <p>@Emagina Studio</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="lighting">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('gaffer-images/moodfree-x-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DSJliARAQpj/?igsh=MXB0OXdmYWpzcGt5Mg==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Lighting</span>
+        <h3>Moodfree X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="lighting">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('gaffer-images/stryv-x-elaine 2.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DR1oNKQAdz5/?igsh=MTU2eDRtNnNuOGp5Yw==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Lighting</span>
+        <h3>Stryv X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="lighting">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('gaffer-images/taobao-x-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DTAVJsNAVHd/?igsh=enNrNzh0NHNwbjZq" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Lighting</span>
+        <h3>Taobao X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="lighting">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('gaffer-images/kewpie-x-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DUiJ6JfAb8_/?igsh=MTVxaTVpc2E0YmhwMw==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Lighting</span>
+        <h3>Kewpie X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="lighting">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('gaffer-images/scentify-x-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DUad60tgXLm/?igsh=Y2l0bTZuOHoxc3Vu" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Lighting</span>
+        <h3>Scentify X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="lighting">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('gaffer-images/darlie-x-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DUVUiHzgdlR/?igsh=ZXM1aXdqdThvZmtu" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Lighting</span>
+        <h3>Darlie X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="sound">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('audioman-images/takdir-kedua.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DNAL3ljTS48/?igsh=eHN3ZGVyNmN0MWsy" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Sound</span>
+        <h3>Takdir Kedua</h3>
+        <p>@Do Drama</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="sound">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('audioman-images/puteri-gantian.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DQesaIdAdbs/?igsh=ZWMwdDl0NjlwaHgy" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Sound</span>
+        <h3>Puteri Gantian</h3>
+        <p>@Do Drama</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="sound">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('audioman-images/40-sahaja.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DRJZBP_EVYl/?igsh=MTFuZThjaDliaG05cg==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Sound</span>
+        <h3>40 Sahaja</h3>
+        <p>@Do Drama</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="sound">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('audioman-images/jiudian-zhiduoxing.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/Da0cfdLDali/?igsh=MXQ2bGVjdW5hNnV6Nw==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Sound</span>
+        <h3>《酒店智多星》</h3>
+        <p>@Resorts World Genting, Multimedia</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="pa">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('production-assistant-images/100-plus-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DTcmmBqAZwx/?igsh=NDh2OTZnNTkybnp6" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Production Assistant</span>
+        <h3>100 Plus X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="pa">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('production-assistant-images/kleenex-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DUHwZtjARaL/?igsh=MWx4aXJqZ2VyZnBscA==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Production Assistant</span>
+        <h3>Kleenex X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="pa">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('production-assistant-images/proton-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DRBgV4pAY_j/?igsh=cms0ZDV3NXozZXlo" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Production Assistant</span>
+        <h3>Proton X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="pa">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('production-assistant-images/ecovas-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DWYku85AWq6/?igsh=MXN6Y3ZzenN6cTJjdA==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Production Assistant</span>
+        <h3>Ecovacs X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="pa">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('production-assistant-images/eucerin-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DYmRtdfBDR0/?igsh=c2ZyOTJwdHpvZGIx" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Production Assistant</span>
+        <h3>Eucerin X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="pa">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('production-assistant-images/kfc-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DYJNhNrBnmX/?igsh=MTh3N25pODg1MzNqOA==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Production Assistant</span>
+        <h3>KFC X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="pa">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('production-assistant-images/darlie-elaine.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DaPwOaaBjvi/?igsh=bzhucXFuZXdydmJ2" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram &rarr;</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Production Assistant</span>
+        <h3>Darlie X Elaine</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="producer">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('producer-images/incompatible-bonds.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/C55yHE6RBWN/?igsh=MXQ1bjE4a3R6Y2ZlZA==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Producer</span>
+        <h3>《Incompatible Bonds 不適合》</h3>
+        <p>@Emagina Studio</p>
+        <p>Position: Producer, Story, 2nd Cam, Lighting (Gaffer), Props, Editor</p>
+      </div>
+    </div>
+    <div class="work-card span-landscape" data-cat="pa">
+      <div class="work-thumb embed yt-lazy" data-video-id="xqKnA12pIw0" style="background-image:url('https://img.youtube.com/vi/xqKnA12pIw0/hqdefault.jpg')" role="button" tabindex="0" aria-label="Play 《马上还钱》新年MV"><div class="play-sm"></div></div>
+      <div class="work-info">
+        <span class="cat-label">Production Assistant</span>
+        <h3>《马上还钱》新年MV</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-landscape" data-cat="ad">
+      <div class="work-thumb embed yt-lazy" data-video-id="AHLjUwURkzo" style="background-image:url('https://img.youtube.com/vi/AHLjUwURkzo/hqdefault.jpg')" role="button" tabindex="0" aria-label="Play The Split Program 頑美世界"><div class="play-sm"></div></div>
+      <div class="work-info">
+        <span class="cat-label">Assistant Director</span>
+        <h3>《The Split Program 頑美世界》</h3>
+        <p>@Emagina Studio</p>
+        <p>Position: 2nd Assistant Director, Set Runner</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="mobile-carousels" id="creditsMobileCarousels"></div>
+</section>
+
+<!-- ===== WORK ===== -->
+<section class="work container" id="work">
+  <div class="section-head reveal">
+    <div class="section-eyebrow">Selected work</div>
+    <h2>Recent cuts</h2>
+  </div>
+
+  <div class="filters" data-target="workGrid">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="longform">Long-Form</button>
+    <button class="filter-btn" data-filter="reels">IG Reels</button>
+    <button class="filter-btn" data-filter="ads">Social Media Ads</button>
+  </div>
+
+  <div class="work-grid" id="workGrid">
+    <div class="work-card span-landscape" data-cat="longform">
+      <div class="work-thumb embed yt-lazy" data-video-id="8GRBJvDlItg" style="background-image:url('https://img.youtube.com/vi/8GRBJvDlItg/hqdefault.jpg')" role="button" tabindex="0" aria-label="Play 傾傾偈子 Ladies N' Gentlemen EP3"><div class="play-sm"></div></div>
+      <div class="work-info">
+        <span class="cat-label">Long-Form</span>
+        <h3>傾傾偈子 Ladies N' Gentlemen — EP3 職場多命案</h3>
+        <p>@Emagina Studio</p>
+      </div>
+    </div>
+    <div class="work-card span-landscape" data-cat="longform">
+      <div class="work-thumb embed yt-lazy" data-video-id="EuIhUvlRQgA" style="background-image:url('https://img.youtube.com/vi/EuIhUvlRQgA/hqdefault.jpg')" role="button" tabindex="0" aria-label="Play 傾傾偈子 Ladies N' Gentlemen EP4"><div class="play-sm"></div></div>
+      <div class="work-info">
+        <span class="cat-label">Long-Form</span>
+        <h3>傾傾偈子 Ladies N' Gentlemen — EP4 母單男難難</h3>
+        <p>@Emagina Studio</p>
+      </div>
+    </div>
+    <div class="work-card span-landscape" data-cat="longform">
+      <div class="work-thumb embed yt-lazy" data-video-id="dee3oiqupLs" style="background-image:url('https://img.youtube.com/vi/dee3oiqupLs/hqdefault.jpg')" role="button" tabindex="0" aria-label="Play 不同温层 EP27"><div class="play-sm"></div></div>
+      <div class="work-info">
+        <span class="cat-label">Long-Form</span>
+        <h3>不同温层 EP27 — 父母想去养老院，我该支持吗？</h3>
+        <p>@BBK Network</p>
+      </div>
+    </div>
+    <div class="work-card span-landscape" data-cat="longform">
+      <div class="work-thumb embed yt-lazy" data-video-id="NwPHCRYVo0M" style="background-image:url('https://img.youtube.com/vi/NwPHCRYVo0M/hqdefault.jpg')" role="button" tabindex="0" aria-label="Play 不同温层 EP20"><div class="play-sm"></div></div>
+      <div class="work-info">
+        <span class="cat-label">Long-Form</span>
+        <h3>不同温层 EP20 — 花20k买名牌包是虚荣吗？</h3>
+        <p>@BBK Network</p>
+      </div>
+    </div>
+
+    <div class="work-card span-portrait" data-cat="reels">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('ig-reels-images/kelantan-wayang-kulit.jpg')" href="https://www.instagram.com/reel/DZXWer4CkDR/?igsh=MTQ1Nm16cWQxeW8wcA==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">IG Reel</span>
+        <h3>Kelantan Wayang Kulit</h3>
+        <p>@elaineyying</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="reels">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('ig-reels-images/abe-yong-tiktok-100k.jpg')" href="https://www.instagram.com/reel/DOvV-gqEjcl/?igsh=MWlpc2E0MDl1Nzl6Zg==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">IG Reel</span>
+        <h3>Abe Yong TikTok 100k!</h3>
+        <p>@abeyong__</p>
+      </div>
+    </div>
+    <div class="work-card span-landscape" data-cat="reels">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('ig-reels-images/1-minute-sugar-video.jpg');aspect-ratio:16/9" href="https://www.instagram.com/reel/Cq2tTqJJam9/?utm_source=ig_web_copy_link&igshid=MzRlODBiNWFlZA%3D%3D" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">IG Reel</span>
+        <h3>1-Minute Sugar Video</h3>
+        <p>@Emagina Studio</p>
+      </div>
+    </div>
+    <div class="work-card span-landscape" data-cat="reels">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('ig-reels-images/ge-deng-zhi-sheng.jpg');aspect-ratio:16/9" href="https://www.instagram.com/reel/CsOP_uUsa2o/?igsh=MWh4cW14bnF4YjR4MQ==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">IG Reel</span>
+        <h3>咯噔之声 EP1-12</h3>
+        <p>@Emagina Studio</p>
+        <p>@dondon_dailynews</p>
+      </div>
+    </div>
+
+    <div class="work-card span-portrait" data-cat="ads">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('social-media-ads/silent-velcro.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DWiblrnDxpx/?igsh=Yjd4eGN4aWdhZTN6" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Social Media Ads</span>
+        <h3>Silent Velcro</h3>
+        <p>@Granny Ben Malaysia</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="ads">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('social-media-ads/chu-chu-little-oven-series.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DV8IMBakYl0/?igsh=OHVlNWZ3Y2VqbnRx" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Social Media Ads</span>
+        <h3>Chu Chu Collection</h3>
+        <p>@Granny Ben Malaysia</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="ads">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('social-media-ads/safari-collection.jpg');aspect-ratio:9/16" href="https://www.instagram.com/reel/DWdEOdpk53B/?igsh=MXc2MnIwdGkzdDJ6NQ==" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Instagram →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Social Media Ads</span>
+        <h3>Safari Collection</h3>
+        <p>@Saeson Baby Malaysia</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="ads">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('social-media-ads/aluminium-trackless-autogate.jpg');aspect-ratio:9/16" href="https://www.facebook.com/share/v/1F6UWiF8rs/?mibextid=wwXIfr" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Facebook →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Social Media Ads</span>
+        <h3>Aluminium Trackless Autogate</h3>
+        <p>@L&amp;L Stainless Steel</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="ads">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('social-media-ads/awning.png');aspect-ratio:9/16" href="https://www.facebook.com/share/v/1D57AfMU8u/?mibextid=wwXIfr" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Facebook →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Social Media Ads</span>
+        <h3>Awning</h3>
+        <p>@L&amp;L Stainless Steel</p>
+      </div>
+    </div>
+    <div class="work-card span-portrait" data-cat="ads">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('social-media-ads/pi-tie-gu.jpg');aspect-ratio:9/16" href="https://www.facebook.com/share/r/1CRe5GtvBQ/?mibextid=wwXIfr" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Facebook →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Social Media Ads</span>
+        <h3>Beleco 皮贴骨项目</h3>
+        <p>@Beleco Clinic</p>
+      </div>
+    </div>
+    <div class="work-card span-square" data-cat="ads">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('social-media-ads/hifu.jpg');aspect-ratio:1/1" href="https://www.facebook.com/share/v/1EG7UULwGP/?mibextid=wwXIfr" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Facebook →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Social Media Ads</span>
+        <h3>Beleco HIFU</h3>
+        <p>@Beleco Clinic</p>
+      </div>
+    </div>
+    <div class="work-card span-square" data-cat="ads">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('social-media-ads/ultherapy.jpg');aspect-ratio:1/1" href="https://www.facebook.com/share/v/1HQgm4RZre/?mibextid=wwXIfr" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Facebook →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Social Media Ads</span>
+        <h3>Beleco Ultherapy</h3>
+        <p>@Beleco Clinic</p>
+      </div>
+    </div>
+    <div class="work-card span-landscape" data-cat="ads">
+      <a class="work-thumb link-out has-thumb" style="background-image:url('social-media-ads/stem-cell.jpg');aspect-ratio:16/9" href="https://www.facebook.com/share/v/193N1tR6ey/?mibextid=wwXIfr" target="_blank" rel="noopener">
+        <div class="play-sm"></div>
+        <span class="ext-label">View on Facebook →</span>
+      </a>
+      <div class="work-info">
+        <span class="cat-label">Social Media Ads</span>
+        <h3>Beleco Stem Cell</h3>
+        <p>@Beleco Clinic</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-carousels" id="workMobileCarousels"></div>
+</section>
+
+<!-- ===== ABOUT + SERVICES ===== -->
+<section class="about container" id="about">
+  <div class="about-photo reveal">
+    <img src="self-images/my-pic.jpg" alt="Jonathan Go">
+  </div>
+  <div class="about-copy reveal">
+    <div class="section-eyebrow">About</div>
+    <h2 style="font-size:1.9rem; margin-bottom:18px;">Jonathan Go</h2>
+    <p>Freelance video editor working across long-form content, Instagram reels, and social media ads. Comfortable moving fast on quick-turnaround ad edits and slower, more considered long-form cuts alike.</p>
+    <p>Also active on set as gaffer, audioman, assistant director, production assistant, and producer — so briefs that need someone who understands both production and post are a good fit.</p>
+    <div class="about-stats">
+      <div>
+        <span class="stat-num">110+</span>
+        <span class="stat-label">Videos Edited</span>
+      </div>
+      <div>
+        <span class="stat-num">48H</span>
+        <span class="stat-label">Typical Turnaround</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SERVICES ===== -->
+<section class="services-section container" id="services">
+  <div class="section-head reveal">
+    <div class="section-eyebrow">Services</div>
+    <h2>What I can take off your plate</h2>
+  </div>
+  <div class="service-cards reveal">
+    <div class="service-card">
+      <span class="service-tag">01 / Long-Form</span>
+      <h3>YouTube editing</h3>
+      <p>Full edit from raw footage to upload-ready file — story structure, pacing, and sound design.</p>
+      <div class="service-meta">
+        <div class="service-meta-row"><span>Turnaround</span><span>5–7 days</span></div>
+        <div class="service-meta-row"><span>Includes</span><span>Color, sound, captions</span></div>
+        <div class="service-meta-row"><span>Revisions</span><span>2 rounds</span></div>
+      </div>
+    </div>
+    <div class="service-card">
+      <span class="service-tag">02 / Short-Form</span>
+      <h3>Reels &amp; shorts</h3>
+      <p>Hook-driven cuts built for retention on Instagram and TikTok, with motion type and trend-aware pacing.</p>
+      <div class="service-meta">
+        <div class="service-meta-row"><span>Turnaround</span><span>2–3 days</span></div>
+        <div class="service-meta-row"><span>Includes</span><span>Captions, motion type</span></div>
+        <div class="service-meta-row"><span>Revisions</span><span>2 rounds</span></div>
+      </div>
+    </div>
+    <div class="service-card">
+      <span class="service-tag">03 / Paid Media</span>
+      <h3>Social Media Ads</h3>
+      <p>Quick-turn cuts for feed and story placements, built around a clear offer and a clear CTA.</p>
+      <div class="service-meta">
+        <div class="service-meta-row"><span>Turnaround</span><span>24–48 hrs</span></div>
+        <div class="service-meta-row"><span>Includes</span><span>Multiple aspect ratios</span></div>
+        <div class="service-meta-row"><span>Revisions</span><span>2 rounds</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONTACT ===== -->
+<section class="contact container" id="contact">
+  <div class="section-eyebrow reveal">Get in touch</div>
+  <h2 class="reveal">Have a video that<br>needs an edit?</h2>
+  <p class="contact-sub reveal">Tell me a bit about the project and I'll reply within a day or two with next steps and availability.</p>
+
+  <div class="contact-grid">
+    <div class="contact-info-list reveal">
+      <div class="contact-info-row">
+        <span>Instagram</span>
+        <a href="https://www.instagram.com/jonathan_yh?igsh=NW5mcjd6b3htOTZ1&utm_source=qr" target="_blank" rel="noopener">@jonathan_yh</a>
+      </div>
+      <div class="contact-info-row">
+        <span>LinkedIn</span>
+        <a href="https://www.linkedin.com/in/yi-hang-go-528823297/" target="_blank" rel="noopener">Jonathan Go</a>
+      </div>
+    </div>
+
+    <form class="contact-form reveal" id="contactForm">
+      <div class="form-field">
+        <label for="cf-name">Name</label>
+        <input type="text" id="cf-name" name="name" placeholder="Your name">
+      </div>
+      <div class="form-field">
+        <label for="cf-brand">Brand / Project Link</label>
+        <input type="text" id="cf-brand" name="brand" placeholder="Website, Instagram, or YouTube handle">
+      </div>
+      <div class="form-field">
+        <label for="cf-project">What are you looking to edit?</label>
+        <textarea id="cf-project" name="project" rows="5" placeholder="Tell me a bit about the project — format, length, deadline..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-primary" id="sendWhatsapp">SEND VIA WHATSAPP →</button>
+        <button type="button" class="btn-secondary" id="sendEmail">SEND VIA EMAIL</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<footer class="container">
+  <span>© 2026 Jonathan Go — Video Editor / Gaffer / Audioman / Assistant Director / Production Assistant / Producer</span>
+  <span>Based in Malaysia — available for remote &amp; on-location work</span>
+</footer>
+
+<script>
+  // Build mobile-only horizontal category carousels by cloning the existing
+  // desktop cards (grouped by data-cat). Runs first so later listeners
+  // (YouTube lazy-load, etc.) attach to the clones too.
+  (function(){
+    function buildCarousels(gridId, containerId, labels, order){
+      const grid = document.getElementById(gridId);
+      const container = document.getElementById(containerId);
+      if (!grid || !container) return;
+      container.innerHTML = '';
+
+      order.forEach(cat => {
+        const cards = grid.querySelectorAll(`.work-card[data-cat="${cat}"]`);
+        if (!cards.length) return;
+
+        const section = document.createElement('div');
+        section.className = 'mc-category';
+
+        const title = document.createElement('div');
+        title.className = 'mc-category-title';
+        title.textContent = labels[cat] || cat;
+        section.appendChild(title);
+
+        const row = document.createElement('div');
+        row.className = 'mc-row';
+        const ROW_HEIGHT = 280;
+        cards.forEach(card => {
+          const clone = card.cloneNode(true);
+          const thumb = clone.querySelector('.work-thumb');
+          let ratio = 16/9; // fallback
+          if (thumb){
+            const styleRatio = thumb.style.aspectRatio; // e.g. "9/16"
+            if (styleRatio && styleRatio.includes('/')){
+              const [w, h] = styleRatio.split('/').map(Number);
+              if (w && h) ratio = w / h;
+            } else if (clone.classList.contains('span-portrait')){
+              ratio = 9/16;
+            } else if (clone.classList.contains('span-square')){
+              ratio = 1;
+            } else if (card.dataset.cat === 'reels' && !styleRatio){
+              ratio = 9/16;
+            }
+            thumb.style.width = `${Math.round(ROW_HEIGHT * ratio)}px`;
+          }
+          row.appendChild(clone);
+        });
+        section.appendChild(row);
+
+        container.appendChild(section);
+      });
+    }
+
+    buildCarousels('creditGrid', 'creditsMobileCarousels',
+      {lighting:'LX: Gaffer', sound:'A1: Audioman', ad:'AD: Assistant Director', pa:'PA: Production Assistant', producer:'PR: Producer'},
+      ['lighting','sound','ad','pa','producer']
+    );
+    buildCarousels('workGrid', 'workMobileCarousels',
+      {longform:'Long-Form', reels:'IG Reels', ads:'Social Media Ads'},
+      ['longform','reels','ads']
+    );
+  })();
+
+  // Upgrade every YouTube thumbnail to the highest resolution available.
+  // maxresdefault isn't guaranteed for every video, so we verify it actually
+  // loaded a real high-res image (not YouTube's small placeholder) before swapping it in.
+  (function(){
+    function upgrade(el){
+      const bg = el.style.backgroundImage;
+      const match = bg.match(/vi\/([\w-]+)\/hqdefault\.jpg/);
+      if (!match) return;
+      const id = match[1];
+      const hiRes = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+      const test = new Image();
+      test.onload = () => {
+        if (test.naturalWidth >= 640) {
+          el.style.backgroundImage = `url('${hiRes}')`;
+        }
+      };
+      test.src = hiRes;
+    }
+    document.querySelectorAll('[style*="img.youtube.com"]').forEach(upgrade);
+  })();
+  // Always start at the top of the page — prevents browsers from restoring
+  // a mid-page scroll position on reload or when returning via a link.
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  window.scrollTo(0, 0);
+  window.addEventListener('load', () => window.scrollTo(0, 0));
+  // Ticking timecode in nav — cosmetic, ties to the timeline motif
+  let frame = 0;
+  function pad(n){ return n.toString().padStart(2,'0'); }
+  function tick(){
+    frame++;
+    const totalFrames = frame;
+    const fps = 24;
+    const ff = totalFrames % fps;
+    const totalSec = Math.floor(totalFrames / fps);
+    const ss = totalSec % 60;
+    const mm = Math.floor(totalSec/60) % 60;
+    const hh = Math.floor(totalSec/3600);
+    const el = document.getElementById('navClock');
+    if(el) el.textContent = `${pad(hh)}:${pad(mm)}:${pad(ss)}:${pad(ff)}`;
+  }
+  setInterval(tick, 1000/24);
+
+  // Mobile hamburger menu
+  (function(){
+    const toggle = document.getElementById('navToggle');
+    const menu = document.getElementById('mobileMenu');
+    if(!toggle || !menu) return;
+    function close(){
+      toggle.classList.remove('open');
+      menu.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+    toggle.addEventListener('click', () => {
+      const isOpen = menu.classList.toggle('open');
+      toggle.classList.toggle('open', isOpen);
+      toggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', close));
+  })();
+
+  // YouTube thumbnails — load the real player only on click, so visitors
+  // always see the clean official thumbnail first instead of a random video frame.
+  document.querySelectorAll('.yt-lazy').forEach(el => {
+    function load(){
+      const id = el.dataset.videoId;
+      el.outerHTML = `<div class="work-thumb embed"><iframe src="https://www.youtube.com/embed/${id}?autoplay=1" title="YouTube video" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>`;
+    }
+    el.addEventListener('click', load);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); load(); } });
+  });
+
+  // Hero picture carousel
+  (function(){
+    const track = document.getElementById('carouselTrack');
+    const dotsWrap = document.getElementById('carouselDots');
+    const prevBtn = document.getElementById('carouselPrev');
+    const nextBtn = document.getElementById('carouselNext');
+    if(!track) return;
+    const slides = track.children;
+    const total = slides.length;
+    let index = 0;
+    let timer = null;
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    for(let i=0; i<total; i++){
+      const dot = document.createElement('button');
+      if(i === 0) dot.classList.add('active');
+      dot.setAttribute('aria-label', 'Go to slide ' + (i+1));
+      dot.addEventListener('click', () => goTo(i));
+      dotsWrap.appendChild(dot);
+    }
+
+    function render(){
+      track.style.transform = `translateX(-${index * 100}%)`;
+      Array.from(dotsWrap.children).forEach((d, i) => d.classList.toggle('active', i === index));
+    }
+    function goTo(i){
+      index = (i + total) % total;
+      render();
+    }
+    function next(){ goTo(index + 1); }
+    function prev(){ goTo(index - 1); }
+
+    nextBtn.addEventListener('click', () => { next(); restart(); });
+    prevBtn.addEventListener('click', () => { prev(); restart(); });
+
+    function start(){
+      if(prefersReduced) return;
+      timer = setInterval(next, 4000);
+    }
+    function restart(){
+      if(timer) clearInterval(timer);
+      start();
+    }
+    start();
+    render();
+  })();
+
+  // Contact form — builds a pre-filled WhatsApp or email message from the fields.
+  // No backend involved: this just opens the person's own WhatsApp/email app.
+  (function(){
+    const nameField = document.getElementById('cf-name');
+    const brandField = document.getElementById('cf-brand');
+    const projectField = document.getElementById('cf-project');
+    const waBtn = document.getElementById('sendWhatsapp');
+    const emailBtn = document.getElementById('sendEmail');
+    if (!waBtn || !emailBtn) return;
+
+    function buildMessage(){
+      const name = (nameField.value || '').trim();
+      const brand = (brandField.value || '').trim();
+      const project = (projectField.value || '').trim();
+
+      const lines = ['Hi Jonathan,', ''];
+      if (name) lines.push(`Name: ${name}`);
+      if (brand) lines.push(`Brand/Project: ${brand}`);
+      lines.push('');
+      lines.push('What I\'m looking to edit:');
+      lines.push(project || '(details to follow)');
+
+      return lines.join('\n');
+    }
+
+    waBtn.addEventListener('click', () => {
+      const text = encodeURIComponent(buildMessage());
+      window.open(`https://wa.me/60108819667?text=${text}`, '_blank');
+    });
+
+    emailBtn.addEventListener('click', () => {
+      const subject = encodeURIComponent('Video editing inquiry');
+      const body = encodeURIComponent(buildMessage().replace(/\n/g, '\r\n'));
+      window.location.href = `mailto:jonathango9202@gmail.com?subject=${subject}&body=${body}`;
+    });
+  })();
+
+  // Filters — scoped per section so Work and Credits filter independently
+  document.querySelectorAll('.filters').forEach(filterGroup => {
+    const grid = document.getElementById(filterGroup.dataset.target);
+    if (!grid) return;
+    const btns = filterGroup.querySelectorAll('.filter-btn');
+    const cards = grid.querySelectorAll('.work-card');
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const f = btn.dataset.filter;
+        cards.forEach(c => {
+          c.style.display = (f === 'all' || c.dataset.cat === f) ? '' : 'none';
+        });
+      });
+    });
+  });
+
+  // Reveal on scroll
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const revealEls = document.querySelectorAll('.reveal');
+  if(prefersReduced){
+    revealEls.forEach(el => el.classList.add('in'));
+  } else {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting){
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealEls.forEach(el => io.observe(el));
+  }
+</script>
+
+</body>
+</html>
