@@ -690,7 +690,10 @@
     gap:20px;
   }
   @media (min-width:760px){
-    .service-cards{grid-template-columns:repeat(3, 1fr);}
+    .service-cards{grid-template-columns:repeat(2, 1fr);}
+  }
+  @media (min-width:1100px){
+    .service-cards{grid-template-columns:repeat(4, 1fr);}
   }
   .service-card{
     border:1px solid var(--line);
@@ -745,6 +748,28 @@
     color:var(--grey);
     margin-top:18px;
     max-width:480px;
+  }
+  .inquiry-tabs{
+    display:flex;
+    gap:10px;
+    margin-top:32px;
+  }
+  .inquiry-tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    padding:11px 20px;
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:transparent;
+    color:var(--grey);
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .inquiry-tab:hover{border-color:var(--grey);}
+  .inquiry-tab.active{
+    background:var(--paper);
+    color:var(--void);
+    border-color:var(--paper);
   }
   .contact-grid{
     margin-top:48px;
@@ -1583,14 +1608,29 @@
         <div class="service-meta-row"><span>Revisions</span><span>2 rounds</span></div>
       </div>
     </div>
+    <div class="service-card">
+      <span class="service-tag">04 / Production</span>
+      <h3>On-set crew</h3>
+      <p>Gaffer, audioman, assistant director, production assistant, or producer — solo or as part of a small crew, for shoots that need hands on the ground, not just in the edit.</p>
+      <div class="service-meta">
+        <div class="service-meta-row"><span>Availability</span><span>Day or project rate</span></div>
+        <div class="service-meta-row"><span>Includes</span><span>Gaffer, Audio, AD, PA, Producer</span></div>
+        <div class="service-meta-row"><span>Booking</span><span>Advance notice preferred</span></div>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- ===== CONTACT ===== -->
 <section class="contact container" id="contact">
   <div class="section-eyebrow reveal">Get in touch</div>
-  <h2 class="reveal">Have a video that<br>needs an edit?</h2>
-  <p class="contact-sub reveal">Tell me a bit about the project and I'll reply within a day or two with next steps and availability.</p>
+  <h2 class="reveal" id="contactHeading">Have a video that<br>needs an edit?</h2>
+  <p class="contact-sub reveal" id="contactSub">Tell me a bit about the project and I'll reply within a day or two with next steps and availability.</p>
+
+  <div class="inquiry-tabs reveal">
+    <button type="button" class="inquiry-tab active" data-type="editing">Video Editing</button>
+    <button type="button" class="inquiry-tab" data-type="production">Production</button>
+  </div>
 
   <div class="contact-grid">
     <div class="contact-info-list reveal">
@@ -1614,7 +1654,7 @@
         <input type="text" id="cf-brand" name="brand" placeholder="Website, Instagram, or YouTube handle">
       </div>
       <div class="form-field">
-        <label for="cf-project">What are you looking to edit?</label>
+        <label for="cf-project" id="cf-project-label">What are you looking to edit?</label>
         <textarea id="cf-project" name="project" rows="5" placeholder="Tell me a bit about the project — format, length, deadline..."></textarea>
       </div>
       <div class="form-actions">
@@ -1822,16 +1862,55 @@
     const emailBtn = document.getElementById('sendEmail');
     if (!waBtn || !emailBtn) return;
 
+    const heading = document.getElementById('contactHeading');
+    const sub = document.getElementById('contactSub');
+    const projectLabel = document.getElementById('cf-project-label');
+    const tabs = document.querySelectorAll('.inquiry-tab');
+    let inquiryType = 'editing';
+
+    const copy = {
+      editing: {
+        heading: 'Have a video that<br>needs an edit?',
+        sub: "Tell me a bit about the project and I'll reply within a day or two with next steps and availability.",
+        label: 'What are you looking to edit?',
+        placeholder: 'Tell me a bit about the project — format, length, deadline...',
+        emailSubject: 'Video editing inquiry',
+        promptLine: "What I'm looking to edit:"
+      },
+      production: {
+        heading: 'Need crew on<br>your next shoot?',
+        sub: "Tell me a bit about the shoot and I'll reply within a day or two with availability and rates.",
+        label: 'What do you need on set?',
+        placeholder: 'Tell me a bit about the shoot — date, location, which roles you need...',
+        emailSubject: 'Production / on-set crew inquiry',
+        promptLine: "What I need on set:"
+      }
+    };
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        inquiryType = tab.dataset.type;
+        const c = copy[inquiryType];
+        heading.innerHTML = c.heading;
+        sub.textContent = c.sub;
+        projectLabel.textContent = c.label;
+        projectField.placeholder = c.placeholder;
+      });
+    });
+
     function buildMessage(){
       const name = (nameField.value || '').trim();
       const brand = (brandField.value || '').trim();
       const project = (projectField.value || '').trim();
+      const c = copy[inquiryType];
 
       const lines = ['Hi Jonathan,', ''];
       if (name) lines.push(`Name: ${name}`);
       if (brand) lines.push(`Brand/Project: ${brand}`);
       lines.push('');
-      lines.push('What I\'m looking to edit:');
+      lines.push(c.promptLine);
       lines.push(project || '(details to follow)');
 
       return lines.join('\n');
@@ -1843,7 +1922,7 @@
     });
 
     emailBtn.addEventListener('click', () => {
-      const subject = encodeURIComponent('Video editing inquiry');
+      const subject = encodeURIComponent(copy[inquiryType].emailSubject);
       const body = encodeURIComponent(buildMessage().replace(/\n/g, '\r\n'));
       window.location.href = `mailto:jonathango9202@gmail.com?subject=${subject}&body=${body}`;
     });
