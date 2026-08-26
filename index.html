@@ -518,6 +518,25 @@
     justify-content:center;
   }
   .work-card[data-cat="reels"] .work-thumb{aspect-ratio:9/16;}
+  .view-count-badge{
+    position:absolute;
+    bottom:10px; right:10px;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    background:rgba(10,11,13,0.65);
+    backdrop-filter:blur(4px);
+    border:1px solid rgba(242,241,237,0.15);
+    border-radius:20px;
+    padding:5px 10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--paper);
+    pointer-events:none;
+  }
+  .view-count-badge svg{width:13px; height:13px; flex-shrink:0;}
+  .view-count-badge .vc-num{min-width:8px;}
   .work-thumb .tc-overlay{
     position:absolute;
     bottom:10px; left:10px;
@@ -1671,6 +1690,69 @@
 </footer>
 
 <script>
+  // Public view-count badges — a small eye icon + count on every thumbnail,
+  // visible to all visitors. Uses a free public hit-counter API (Abacus).
+  // Runs first so the mobile-carousel cloning below copies the badges too.
+  (function(){
+    const NAMESPACE = 'jonathango9202-portfolio';
+    const eyeSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+
+    function slugify(str){
+      return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+    }
+
+    function keyForCard(card){
+      const title = card.querySelector('h3');
+      const link = card.querySelector('a.work-thumb');
+      const base = (title ? title.textContent : '') || (link ? link.href : '') || Math.random().toString(36);
+      return slugify(base) || 'untitled';
+    }
+
+    document.querySelectorAll('#creditGrid .work-card, #workGrid .work-card').forEach(card => {
+      const thumb = card.querySelector('.work-thumb');
+      const link = card.querySelector('a.work-thumb');
+      if (!thumb) return;
+
+      const key = keyForCard(card);
+      thumb.dataset.viewKey = key;
+
+      const badge = document.createElement('div');
+      badge.className = 'view-count-badge';
+      badge.innerHTML = `${eyeSVG}<span class="vc-num">–</span>`;
+      thumb.appendChild(badge);
+
+      // Show the current count (read-only, no increment) as soon as the page loads.
+      fetch(`https://abacus.jasoncameron.dev/get/${NAMESPACE}/${key}`)
+        .then(r => r.json())
+        .then(d => { badge.querySelector('.vc-num').textContent = d.value; })
+        .catch(() => { badge.querySelector('.vc-num').textContent = '0'; });
+
+      // Increment the count when someone actually clicks through to watch/view the project.
+      if (link) {
+        link.addEventListener('click', () => {
+          fetch(`https://abacus.jasoncameron.dev/hit/${NAMESPACE}/${key}`)
+            .then(r => r.json())
+            .then(d => {
+              document.querySelectorAll(`.work-thumb[data-view-key="${key}"] .vc-num`).forEach(el => {
+                el.textContent = d.value;
+              });
+            })
+            .catch(() => {});
+        });
+      }
+    });
+  })();
+
+  // Visit notification — pings a free push-notification topic every time
+  // someone loads the page, so you get a real-time alert on your phone.
+  // Subscribe to this topic in the ntfy app (iOS/Android) or at ntfy.sh/app.
+  (function(){
+    fetch('https://ntfy.sh/jonathango-portfolio-sz2nzcgc2c', {
+      method: 'POST',
+      body: 'New visit to your portfolio site — ' + new Date().toLocaleString()
+    }).catch(() => {});
+  })();
+
   // Build mobile-only horizontal category carousels by cloning the existing
   // desktop cards (grouped by data-cat). Runs first so later listeners
   // (YouTube lazy-load, etc.) attach to the clones too.
@@ -1730,6 +1812,23 @@
       {longform:'Long-Form', reels:'IG Reels', ads:'Social Media Ads'},
       ['longform','reels','ads']
     );
+
+    // Cloning copies the badge markup but not click listeners, so wire
+    // up view-count incrementing on the mobile carousel cards separately.
+    const NAMESPACE = 'jonathango9202-portfolio';
+    document.querySelectorAll('.mc-row a.work-thumb[data-view-key]').forEach(link => {
+      link.addEventListener('click', () => {
+        const key = link.dataset.viewKey;
+        fetch(`https://abacus.jasoncameron.dev/hit/${NAMESPACE}/${key}`)
+          .then(r => r.json())
+          .then(d => {
+            document.querySelectorAll(`.work-thumb[data-view-key="${key}"] .vc-num`).forEach(el => {
+              el.textContent = d.value;
+            });
+          })
+          .catch(() => {});
+      });
+    });
   })();
 
   // Upgrade every YouTube thumbnail to the highest resolution available.
