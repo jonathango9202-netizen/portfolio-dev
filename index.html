@@ -1703,14 +1703,15 @@
 
     function keyForCard(card){
       const title = card.querySelector('h3');
+      const thumb = card.querySelector('.work-thumb');
+      const videoId = thumb ? thumb.dataset.videoId : null;
       const link = card.querySelector('a.work-thumb');
-      const base = (title ? title.textContent : '') || (link ? link.href : '') || Math.random().toString(36);
+      const base = (title ? title.textContent : '') || videoId || (link ? link.href : '') || Math.random().toString(36);
       return slugify(base) || 'untitled';
     }
 
     document.querySelectorAll('#creditGrid .work-card, #workGrid .work-card').forEach(card => {
       const thumb = card.querySelector('.work-thumb');
-      const link = card.querySelector('a.work-thumb');
       if (!thumb) return;
 
       const key = keyForCard(card);
@@ -1727,19 +1728,19 @@
         .then(d => { badge.querySelector('.vc-num').textContent = d.value; })
         .catch(() => { badge.querySelector('.vc-num').textContent = '0'; });
 
-      // Increment the count when someone actually clicks through to watch/view the project.
-      if (link) {
-        link.addEventListener('click', () => {
-          fetch(`https://abacus.jasoncameron.dev/hit/${NAMESPACE}/${key}`)
-            .then(r => r.json())
-            .then(d => {
-              document.querySelectorAll(`.work-thumb[data-view-key="${key}"] .vc-num`).forEach(el => {
-                el.textContent = d.value;
-              });
-            })
-            .catch(() => {});
-        });
-      }
+      // Increment on click — works whether the thumbnail is a link-out <a> or a
+      // click-to-embed <div> (like the YouTube inline-play cards), since the
+      // listener is on the thumb itself rather than assuming a specific tag.
+      thumb.addEventListener('click', () => {
+        fetch(`https://abacus.jasoncameron.dev/hit/${NAMESPACE}/${key}`)
+          .then(r => r.json())
+          .then(d => {
+            document.querySelectorAll(`.work-thumb[data-view-key="${key}"] .vc-num`).forEach(el => {
+              el.textContent = d.value;
+            });
+          })
+          .catch(() => {});
+      }, { once: true });
     });
   })();
 
@@ -1816,9 +1817,9 @@
     // Cloning copies the badge markup but not click listeners, so wire
     // up view-count incrementing on the mobile carousel cards separately.
     const NAMESPACE = 'jonathango9202-portfolio';
-    document.querySelectorAll('.mc-row a.work-thumb[data-view-key]').forEach(link => {
-      link.addEventListener('click', () => {
-        const key = link.dataset.viewKey;
+    document.querySelectorAll('.mc-row .work-thumb[data-view-key]').forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        const key = thumb.dataset.viewKey;
         fetch(`https://abacus.jasoncameron.dev/hit/${NAMESPACE}/${key}`)
           .then(r => r.json())
           .then(d => {
@@ -1827,7 +1828,7 @@
             });
           })
           .catch(() => {});
-      });
+      }, { once: true });
     });
   })();
 
