@@ -243,7 +243,12 @@
     padding:7px 12px;
     border-radius:3px;
     background:var(--panel);
+    text-decoration:none;
+    display:inline-block;
+    cursor:pointer;
+    transition:border-color 0.2s, transform 0.15s;
   }
+  .role-chip:hover{border-color:var(--amber); transform:translateY(-1px);}
   .role-chip b{color:var(--amber);}
 
   .hero-monitor{
@@ -959,12 +964,12 @@
   <p class="hero-sub">I edit long-form video, Instagram reels, and social ad content — and on set, I run lighting, sound, and act as assistant director. One person who understands the whole chain, from slate to final export.</p>
 
   <div class="hero-roles">
-    <span class="role-chip"><b>V1:</b> Editor</span>
-    <span class="role-chip"><b>LX:</b> Gaffer</span>
-    <span class="role-chip"><b>A1:</b> Audioman</span>
-    <span class="role-chip"><b>AD:</b> Assistant Director</span>
-    <span class="role-chip"><b>PA:</b> Production Assistant</span>
-    <span class="role-chip"><b>PR:</b> Producer</span>
+    <a class="role-chip" href="#work" data-jump-filter="all" data-jump-target="workGrid"><b>V1:</b> Editor</a>
+    <a class="role-chip" href="#credits" data-jump-filter="lighting" data-jump-target="creditGrid"><b>LX:</b> Gaffer</a>
+    <a class="role-chip" href="#credits" data-jump-filter="sound" data-jump-target="creditGrid"><b>A1:</b> Audioman</a>
+    <a class="role-chip" href="#credits" data-jump-filter="ad" data-jump-target="creditGrid"><b>AD:</b> Assistant Director</a>
+    <a class="role-chip" href="#credits" data-jump-filter="pa" data-jump-target="creditGrid"><b>PA:</b> Production Assistant</a>
+    <a class="role-chip" href="#credits" data-jump-filter="producer" data-jump-target="creditGrid"><b>PR:</b> Producer</a>
   </div>
 
   <div class="hero-monitor">
@@ -2027,6 +2032,24 @@
       window.location.href = `mailto:jonathango9202@gmail.com?subject=${subject}&body=${body}`;
     });
   })();
+
+  // Hero role chips — jump to the right section and auto-select the matching filter tab.
+  document.querySelectorAll('.role-chip[data-jump-filter]').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = chip.getAttribute('href').slice(1);
+      const grid = document.getElementById(chip.dataset.jumpTarget);
+      const filterValue = chip.dataset.jumpFilter;
+      const section = document.getElementById(targetId);
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      if (grid) {
+        const filterGroup = grid.closest('section')?.querySelector('.filters');
+        const btn = filterGroup?.querySelector(`.filter-btn[data-filter="${filterValue}"]`);
+        if (btn) btn.click();
+      }
+    });
+  });
 
   // Filters — scoped per section so Work and Credits filter independently
   document.querySelectorAll('.filters').forEach(filterGroup => {
