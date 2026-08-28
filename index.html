@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google Analytics — only tracks on the real live site, so pasting this
+     file into a dev/staging environment never pollutes the real data. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QQQSXE115Y"></script>
+<script>
+  const IS_PRODUCTION_SITE = location.hostname === 'jonathango9202-netizen.github.io'
+    && location.pathname.startsWith('/jonathan_yh/');
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  if (IS_PRODUCTION_SITE) {
+    gtag('js', new Date());
+    gtag('config', 'G-QQQSXE115Y');
+  }
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jonathan Go — Video Editor / On-Set Crew</title>
@@ -1089,6 +1102,7 @@
         <span class="cat-label">Lighting</span>
         <h3>Hada Labo X Elaine</h3>
         <p>@elaineyying</p>
+        <p>@Emagina Studio</p>
       </div>
     </div>
     <div class="work-card span-portrait" data-cat="lighting">
@@ -1100,6 +1114,7 @@
         <span class="cat-label">Lighting</span>
         <h3>Colgate X Elaine</h3>
         <p>@elaineyying</p>
+        <p>@Emagina Studio</p>
       </div>
     </div>
     <div class="work-card span-portrait" data-cat="lighting">
@@ -1111,6 +1126,7 @@
         <span class="cat-label">Lighting</span>
         <h3>Hada Labo X Elaine</h3>
         <p>@elaineyying</p>
+        <p>@Emagina Studio</p>
       </div>
     </div>
     <div class="work-card span-portrait" data-cat="lighting">
@@ -1133,6 +1149,7 @@
         <span class="cat-label">Lighting</span>
         <h3>Moodfree X Elaine</h3>
         <p>@elaineyying</p>
+        <p>@Emagina Studio</p>
       </div>
     </div>
     <div class="work-card span-portrait" data-cat="lighting">
@@ -1144,6 +1161,7 @@
         <span class="cat-label">Lighting</span>
         <h3>Stryv X Elaine</h3>
         <p>@elaineyying</p>
+        <p>@Emagina Studio</p>
       </div>
     </div>
     <div class="work-card span-portrait" data-cat="lighting">
@@ -1155,6 +1173,7 @@
         <span class="cat-label">Lighting</span>
         <h3>Taobao X Elaine</h3>
         <p>@elaineyying</p>
+        <p>@Emagina Studio</p>
       </div>
     </div>
     <div class="work-card span-portrait" data-cat="lighting">
@@ -1166,6 +1185,7 @@
         <span class="cat-label">Lighting</span>
         <h3>Kewpie X Elaine</h3>
         <p>@elaineyying</p>
+        <p>@Emagina Studio</p>
       </div>
     </div>
     <div class="work-card span-portrait" data-cat="lighting">
@@ -1177,6 +1197,7 @@
         <span class="cat-label">Lighting</span>
         <h3>Scentify X Elaine</h3>
         <p>@elaineyying</p>
+        <p>@Emagina Studio</p>
       </div>
     </div>
     <div class="work-card span-portrait" data-cat="lighting">
@@ -1188,6 +1209,7 @@
         <span class="cat-label">Lighting</span>
         <h3>Darlie X Elaine</h3>
         <p>@elaineyying</p>
+        <p>@Emagina Studio</p>
       </div>
     </div>
     <div class="work-card span-portrait" data-cat="sound">
@@ -1736,7 +1758,9 @@
       // Increment on click — works whether the thumbnail is a link-out <a> or a
       // click-to-embed <div> (like the YouTube inline-play cards), since the
       // listener is on the thumb itself rather than assuming a specific tag.
+      // Gated to the real domain so testing/dev clicks never inflate real counts.
       thumb.addEventListener('click', () => {
+        if (!IS_PRODUCTION_SITE) return;
         fetch(`https://abacus.jasoncameron.dev/hit/${NAMESPACE}/${key}`)
           .then(r => r.json())
           .then(d => {
@@ -1752,12 +1776,32 @@
   // Visit notification — pings a free push-notification topic every time
   // someone loads the page, so you get a real-time alert on your phone.
   // Subscribe to this topic in the ntfy app (iOS/Android) or at ntfy.sh/app.
+  // Gated to the real domain so opening the file locally/on a dev site never fires it.
   (function(){
+    if (!IS_PRODUCTION_SITE) return;
     fetch('https://ntfy.sh/jonathango-portfolio-sz2nzcgc2c', {
       method: 'POST',
       body: 'New visit to your portfolio site — ' + new Date().toLocaleString()
     }).catch(() => {});
   })();
+
+  // Hero role chips — jump to the right section and auto-select the matching filter tab.
+  document.querySelectorAll('.role-chip[data-jump-filter]').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = chip.getAttribute('href').slice(1);
+      const grid = document.getElementById(chip.dataset.jumpTarget);
+      const filterValue = chip.dataset.jumpFilter;
+      const section = document.getElementById(targetId);
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      if (grid) {
+        const filterGroup = grid.closest('section')?.querySelector('.filters');
+        const btn = filterGroup?.querySelector(`.filter-btn[data-filter="${filterValue}"]`);
+        if (btn) btn.click();
+      }
+    });
+  });
 
   // Build mobile-only horizontal category carousels by cloning the existing
   // desktop cards (grouped by data-cat). Runs first so later listeners
@@ -1824,6 +1868,7 @@
     const NAMESPACE = 'jonathango9202-portfolio';
     document.querySelectorAll('.mc-row .work-thumb[data-view-key]').forEach(thumb => {
       thumb.addEventListener('click', () => {
+        if (!IS_PRODUCTION_SITE) return;
         const key = thumb.dataset.viewKey;
         fetch(`https://abacus.jasoncameron.dev/hit/${NAMESPACE}/${key}`)
           .then(r => r.json())
@@ -2032,24 +2077,6 @@
       window.location.href = `mailto:jonathango9202@gmail.com?subject=${subject}&body=${body}`;
     });
   })();
-
-  // Hero role chips — jump to the right section and auto-select the matching filter tab.
-  document.querySelectorAll('.role-chip[data-jump-filter]').forEach(chip => {
-    chip.addEventListener('click', (e) => {
-      e.preventDefault();
-      const targetId = chip.getAttribute('href').slice(1);
-      const grid = document.getElementById(chip.dataset.jumpTarget);
-      const filterValue = chip.dataset.jumpFilter;
-      const section = document.getElementById(targetId);
-      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-      if (grid) {
-        const filterGroup = grid.closest('section')?.querySelector('.filters');
-        const btn = filterGroup?.querySelector(`.filter-btn[data-filter="${filterValue}"]`);
-        if (btn) btn.click();
-      }
-    });
-  });
 
   // Filters — scoped per section so Work and Credits filter independently
   document.querySelectorAll('.filters').forEach(filterGroup => {
